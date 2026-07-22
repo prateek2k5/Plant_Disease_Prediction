@@ -10,124 +10,178 @@ import numpy as np
 # Uploaded image ko read aur process karne ke liye
 from PIL import Image
 
-# Web app ki basic settings
+# ----------------------------------------
+# 🌿 Web App Header
+# ----------------------------------------
 
-st.set_page_config(
-
-    page_title="Plant Disease Detection",   # Browser tab ka title
-
-    page_icon="🌿",                         # Browser tab icon
-
-    layout="centered"                      # Page center me dikhega
-)
-
-# Main Heading
 st.title("🌿 Plant Disease Detection")
 
-# Short Description
-st.write("Upload a leaf image to predict the disease.")
+st.caption(
+    "AI-powered leaf disease prediction using TensorFlow & MobileNetV2"
+)
 
-# Model ko sirf ek hi baar load karega.
-# Har refresh par dobara load nahi hoga.
+st.markdown("---")
+
+# ----------------------------------------
+# 🌿 Sidebar
+# ----------------------------------------
+
+with st.sidebar:
+
+    st.header("🌿 About")
+
+    st.write("""
+This application predicts plant leaf diseases using a
+Deep Learning model trained on the PlantVillage dataset.
+""")
+
+    st.markdown("---")
+
+    st.write("### 🤖 Model")
+    st.write("MobileNetV2")
+
+    st.write("### 📊 Dataset")
+    st.write("PlantVillage")
+
+    st.write("### 👨‍💻 Developer")
+    st.write("Prateek Verma")
+
+# ----------------------------------------
+# Model Load
+# ----------------------------------------
+
 @st.cache_resource
 def load_model():
     return tf.keras.models.load_model("plant_disease_model.keras")
 
-# Function call karke model load kar rahe hain.
 model = load_model()
 
-# Saved class names load kar rahe hain.
+# Class Names
+class_names = np.load("class_names.npy", allow_pickle=True)
 
-# Prediction ke baad index ko
-# disease name me convert karenge.
-class_names = np.load("class_names.npy",allow_pickle=True)
+# ----------------------------------------
+# Image Upload
+# ----------------------------------------
 
-# User image upload karega.
-uploaded_file = st.file_uploader("Choose a Leaf Image",type=["jpg","jpeg","png"])
+uploaded_file = st.file_uploader(
+    "📁 Upload Leaf Image",
+    type=["jpg", "jpeg", "png"]
+)
 
-# Uploaded image ko model ke according
-# preprocess aur predict karega.
+camera_image = st.camera_input(
+    "📷 Capture Leaf Image"
+)
+
+# ----------------------------------------
+# Prediction Function
+# ----------------------------------------
 
 def predict(image):
 
-    # Image ko 224x224 me resize kar rahe hain.
+    # Resize Image
     image = image.resize((224,224))
 
-    # PIL Image ko NumPy Array me convert kar rahe hain.
+    # PIL → NumPy
     image = np.array(image)
 
-    # Pixel values ko 0-1 range me convert kar rahe hain.
-    image = image.astype("float32") / 255.0
+    # Normalize
+    image = image.astype("float32")/255.0
 
-    # Batch Dimension add kar rahe hain.
+    # Batch Dimension
     image = np.expand_dims(image, axis=0)
 
-    # Prediction karwa rahe hain.
+    # Prediction
     prediction = model.predict(image, verbose=0)
 
-    # Highest probability wala index.
+    # Highest Probability Index
     predicted_index = np.argmax(prediction)
 
-    # Highest confidence value.
+    # Confidence
     confidence = np.max(prediction)
 
-    # Disease Name aur Confidence return karega.
     return class_names[predicted_index], confidence
 
-# User directly camera se photo click bhi kar sakta hai.
-camera_image = st.camera_input("📷 Capture Leaf Image")
+# ----------------------------------------
+# Image Selection
+# ----------------------------------------
 
-# Agar image upload hui hai.
 if uploaded_file is not None:
+
     image = Image.open(uploaded_file).convert("RGB")
 
-# Agar camera se image click hui hai.
 elif camera_image is not None:
+
     image = Image.open(camera_image).convert("RGB")
 
-# Agar dono me se koi image mili.
 else:
+
     image = None
 
-# Agar image available hai.
+# ----------------------------------------
+# Prediction Section
+# ----------------------------------------
+
 if image is not None:
 
-    # Uploaded/Captured image show karega.
-    st.image(image, caption="Selected Image", use_container_width=True)
+    # Selected Image Show Karega
+    st.image(
+        image,
+        caption="📷 Selected Leaf Image",
+        use_container_width=True
+    )
 
-    # Prediction tabhi hoga jab button click hoga.
-    if st.button("🔍 Predict Disease", use_container_width=True):
+    st.markdown("")
+
+    # Predict Button
+    if st.button(
+        "🔍 Predict Disease",
+        use_container_width=True,
+        type="primary"
+    ):
 
         with st.spinner("🔍 Analyzing Leaf..."):
 
-            # Prediction Function call karenge.
             disease, confidence = predict(image)
 
-        # Folder name ko readable format me convert karenge.
-        disease = disease.replace("___", " → ")
-        disease = disease.replace("_", " ")
+        # Folder Name Ko Readable Banayenge
+        disease = disease.replace("___"," → ")
+        disease = disease.replace("_"," ")
 
-        # Prediction Result
-        st.success(f"🌿 Predicted Disease : {disease}")
+        st.markdown("---")
 
-        # Confidence Percentage
+        st.subheader("🌿 Prediction Result")
+
+        # Disease
+        st.success(f"Predicted Disease : {disease}")
+
+        # Confidence
         st.metric(
             label="🎯 Confidence",
             value=f"{confidence*100:.2f}%"
         )
 
-        # Confidence Progress Bar
-        st.progress(int(confidence * 100))
+        # Progress Bar
+        st.progress(int(confidence*100))
 
-        st.markdown("---")
+        # Confidence Message
+        if confidence >= 0.80:
 
-        st.subheader("Prediction Result")
+            st.success("✅ High Confidence Prediction")
 
-        st.write("### 🌿 Disease")
-        st.success(disease)
+        elif confidence >= 0.60:
 
-        st.write("### 🎯 Confidence")
-        st.write(f"{confidence*100:.2f}%")
+            st.warning("⚠ Moderate Confidence Prediction")
+
+        else:
+
+            st.error("❗Low Confidence. Try another leaf image.")
+
+# ----------------------------------------
+# Footer
+# ----------------------------------------
 
 st.markdown("---")
-st.caption("Made with ❤️ using TensorFlow, MobileNetV2 & Streamlit")
+
+st.caption(
+    "🌿 Developed by Prateek Verma | Powered by TensorFlow • MobileNetV2 • Streamlit"
+)
