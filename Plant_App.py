@@ -32,43 +32,74 @@ st.markdown(
 
     html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
     .stApp {
-        background: radial-gradient(circle at 8% 4%, rgba(181,226,191,.22), transparent 26%),
-                    linear-gradient(180deg,#f7fbf7 0%,#f1f7f1 100%);
+        background:
+            radial-gradient(circle at 8% 4%, rgba(34,197,94,.10), transparent 28%),
+            linear-gradient(145deg, #07110d 0%, #0b1711 48%, #101d16 100%);
+        color: #e7f3ea;
     }
-    [data-testid="stHeader"] { background: rgba(247,251,247,.85); }
+    [data-testid="stHeader"] { background: rgba(7,17,13,.92); }
+    [data-testid="stToolbar"] { right: 1rem; }
     .block-container { max-width: 1180px; padding-top: 2rem; padding-bottom: 3rem; }
+    h1, h2, h3, h4, p, label, .stMarkdown, [data-testid="stCaptionContainer"] {
+        color: #e5f0e8;
+    }
     .hero {
-        background: linear-gradient(120deg,#103f2b 0%,#176443 58%,#26815a 100%);
-        padding: 2.2rem 2.3rem; border-radius: 25px; color: white; margin-bottom: 1.4rem;
-        box-shadow: 0 16px 40px rgba(20,78,49,.15);
+        background: linear-gradient(120deg,#102c20 0%,#145235 58%,#197447 100%);
+        padding: 2.2rem 2.3rem; border: 1px solid rgba(134,239,172,.16);
+        border-radius: 25px; color: white; margin-bottom: 1.4rem;
+        box-shadow: 0 18px 48px rgba(0,0,0,.28);
     }
     .hero h1 {
         font-family: 'Manrope',sans-serif; font-size: clamp(2rem,4vw,3rem); font-weight: 800;
-        letter-spacing: -1.4px; line-height: 1.12; margin: .35rem 0 .7rem; color: white;
+        letter-spacing: -1.4px; line-height: 1.12; margin: .35rem 0 .7rem; color: #f3fff6;
     }
-    .hero p { color: #e0f2e5; font-size: 1.03rem; max-width: 650px; margin-bottom: 0; }
-    .eyebrow { text-transform: uppercase; letter-spacing: 2px; font-size: .72rem; font-weight: 700; color: #b9e9c8; }
-    .hero-pill { display: inline-block; margin-top: 1.2rem; padding: .42rem .8rem; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.10); border-radius: 999px; font-size: .8rem; color: #f0fff3; }
-    .section-heading { font-family: 'Manrope',sans-serif; color: #153c2b; font-weight: 800; font-size: 1.25rem; margin: .4rem 0 .2rem; }
-    .muted { color: #64766b; font-size: .92rem; }
-    .panel { background: rgba(255,255,255,.9); border: 1px solid #e0ebe1; border-radius: 20px; padding: 1.2rem 1.3rem; box-shadow: 0 8px 24px rgba(28,67,42,.045); }
-    .result-label { color: #5c7564; font-size: .78rem; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
-    .result-name { font-family: 'Manrope',sans-serif; color: #17452f; font-weight: 800; font-size: clamp(1.3rem,2.3vw,1.8rem); line-height: 1.25; margin: .45rem 0 .8rem; overflow-wrap: anywhere; }
-    .small-note { color: #66776b; font-size: .82rem; line-height: 1.5; }
+    .hero p { color: #d0ead8; font-size: 1.03rem; max-width: 650px; margin-bottom: 0; }
+    .eyebrow { text-transform: uppercase; letter-spacing: 2px; font-size: .72rem; font-weight: 700; color: #a7f3c0; }
+    .hero-pill { display: inline-block; margin-top: 1.2rem; padding: .42rem .8rem; border: 1px solid rgba(255,255,255,.22); background: rgba(0,0,0,.18); border-radius: 999px; font-size: .8rem; color: #f0fff3; }
+    .section-heading { font-family: 'Manrope',sans-serif; color: #a7f3c0; font-weight: 800; font-size: 1.25rem; margin: .4rem 0 .2rem; }
+    .muted { color: #a2b9a9; font-size: .92rem; }
+    .panel {
+        background: linear-gradient(145deg, rgba(22,39,29,.98), rgba(14,29,20,.98));
+        border: 1px solid #294635; border-radius: 20px; padding: 1.2rem 1.3rem;
+        box-shadow: 0 10px 28px rgba(0,0,0,.22);
+    }
+    .result-label { color: #a7c5b0; font-size: .78rem; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
+    .result-name { font-family: 'Manrope',sans-serif; color: #b8f7ca; font-weight: 800; font-size: clamp(1.3rem,2.3vw,1.8rem); line-height: 1.25; margin: .45rem 0 .8rem; overflow-wrap: anywhere; }
+    .small-note { color: #b0c4b6; font-size: .82rem; line-height: 1.5; }
     div.stButton > button {
-        background: linear-gradient(100deg,#176443,#27865b); color: white; border: 0;
+        background: linear-gradient(100deg,#15803d,#22a05a); color: white; border: 1px solid #36a765;
         border-radius: 12px; min-height: 3rem; font-weight: 700; transition: all .2s ease;
     }
     div.stButton > button:hover {
-        background: linear-gradient(100deg,#125235,#1e7149); color: white; border: 0;
-        transform: translateY(-1px); box-shadow: 0 7px 18px rgba(23,100,67,.2);
+        background: linear-gradient(100deg,#166534,#15803d); color: white; border: 1px solid #4ade80;
+        transform: translateY(-1px); box-shadow: 0 7px 18px rgba(34,197,94,.16);
     }
-    [data-testid="stFileUploader"] { background: #fbfefb; border: 1px dashed #a9cbb3; border-radius: 15px; padding: .65rem; }
-    [data-testid="stSidebar"] { background: #f0f7f0; border-right: 1px solid #e0ebe1; }
-    .sidebar-brand { background: linear-gradient(135deg,#164a32,#287c52); color: white; padding: 1.15rem; border-radius: 17px; margin-bottom: 1rem; }
+    [data-testid="stFileUploader"] {
+        background: #101f16; border: 1px dashed #3c7550; border-radius: 15px; padding: .65rem;
+    }
+    [data-testid="stFileUploader"] section { background: transparent; }
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg,#0a160f,#0d1b12);
+        border-right: 1px solid #20392a;
+    }
+    [data-testid="stSidebar"] * { color: #deeee2; }
+    .sidebar-brand { background: linear-gradient(135deg,#123a26,#17633d); color: white; padding: 1.15rem; border: 1px solid #2d7048; border-radius: 17px; margin-bottom: 1rem; }
     .sidebar-brand h3 { color: white; margin: .2rem 0; font-family: 'Manrope',sans-serif; }
-    .sidebar-brand p { color: #d9f0df; font-size: .85rem; margin-bottom: 0; }
-    .footer { text-align: center; color: #718276; font-size: .82rem; padding-top: 1rem; }
+    .sidebar-brand p { color: #d1f3db; font-size: .85rem; margin-bottom: 0; }
+    .footer { text-align: center; color: #91aa99; font-size: .82rem; padding-top: 1rem; }
+    /* Dark controls and readable input labels */
+    [data-baseweb="select"] > div, [data-baseweb="popover"] > div,
+    [data-testid="stTextInput"] input, [data-testid="stNumberInput"] input {
+        background-color: #14251a; color: #e7f3ea; border-color: #355541;
+    }
+    [data-testid="stRadio"] label, [data-testid="stFileUploader"] label { color: #e0eee4 !important; }
+    [data-testid="stMetric"] {
+        background: #14251a; border: 1px solid #2b4935; padding: .8rem; border-radius: 14px;
+    }
+    [data-testid="stMetricLabel"] { color: #b8cdbd !important; }
+    [data-testid="stMetricValue"] { color: #b8f7ca !important; }
+    [data-testid="stAlert"] { border-radius: 12px; }
+    hr { border-color: #294333; }
     </style>
     """,
     unsafe_allow_html=True,
