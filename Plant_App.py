@@ -1,19 +1,35 @@
+import html
+from pathlib import Path
+
+import numpy as np
 import streamlit as st
 import tensorflow as tf
-import numpy as np
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
+
+# =========================================================
+# PAGE CONFIG
+# =========================================================
 st.set_page_config(
-    page_title="PlantCare AI | Disease Detection",
+    page_title="PlantCare AI | Plant Disease Detection",
     page_icon="🌿",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
+MODEL_PATH = Path(__file__).resolve().parent / "plant_disease_model.keras"
+CLASS_NAMES_PATH = Path(__file__).resolve().parent / "class_names.npy"
+IMAGE_SIZE = (224, 224)
+
+
+# =========================================================
+# STYLING
+# =========================================================
 st.markdown(
     """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
     html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
     .stApp {
         background: radial-gradient(circle at 8% 4%, rgba(181,226,191,.22), transparent 26%),
@@ -39,8 +55,14 @@ st.markdown(
     .result-label { color: #5c7564; font-size: .78rem; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
     .result-name { font-family: 'Manrope',sans-serif; color: #17452f; font-weight: 800; font-size: clamp(1.3rem,2.3vw,1.8rem); line-height: 1.25; margin: .45rem 0 .8rem; overflow-wrap: anywhere; }
     .small-note { color: #66776b; font-size: .82rem; line-height: 1.5; }
-    div.stButton > button { background: linear-gradient(100deg,#176443,#27865b); color: white; border: 0; border-radius: 12px; min-height: 3rem; font-weight: 700; transition: all .2s ease; }
-    div.stButton > button:hover { background: linear-gradient(100deg,#125235,#1e7149); color: white; border: 0; transform: translateY(-1px); box-shadow: 0 7px 18px rgba(23,100,67,.2); }
+    div.stButton > button {
+        background: linear-gradient(100deg,#176443,#27865b); color: white; border: 0;
+        border-radius: 12px; min-height: 3rem; font-weight: 700; transition: all .2s ease;
+    }
+    div.stButton > button:hover {
+        background: linear-gradient(100deg,#125235,#1e7149); color: white; border: 0;
+        transform: translateY(-1px); box-shadow: 0 7px 18px rgba(23,100,67,.2);
+    }
     [data-testid="stFileUploader"] { background: #fbfefb; border: 1px dashed #a9cbb3; border-radius: 15px; padding: .65rem; }
     [data-testid="stSidebar"] { background: #f0f7f0; border-right: 1px solid #e0ebe1; }
     .sidebar-brand { background: linear-gradient(135deg,#164a32,#287c52); color: white; padding: 1.15rem; border-radius: 17px; margin-bottom: 1rem; }
@@ -52,6 +74,10 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
+# =========================================================
+# SIDEBAR
+# =========================================================
 with st.sidebar:
     st.markdown(
         """
@@ -64,7 +90,10 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
     st.markdown("### About this project")
-    st.write("Upload a plant leaf photo or capture one with your camera to get a model-generated disease prediction.")
+    st.write(
+        "Upload a plant leaf photo or capture one with your camera "
+        "to get an AI-generated disease-class prediction."
+    )
     st.divider()
     st.markdown("**🧠 Model**")
     st.write("MobileNetV2")
@@ -73,37 +102,87 @@ with st.sidebar:
     st.markdown("**🧪 Framework**")
     st.write("TensorFlow · Streamlit")
     st.divider()
-    st.caption("Prediction is an AI estimate, not a confirmed diagnosis.")
+    st.caption("AI predictions are estimates, not confirmed diagnoses.")
     st.caption("Developer: Pooja Bisht")
 
+
+# =========================================================
+# HEADER
+# =========================================================
 st.markdown(
     """
     <div class="hero">
         <div class="eyebrow">PLANT HEALTH • AI ASSISTANT</div>
         <h1>A healthier leaf<br>starts with a closer look.</h1>
-        <p>Check a leaf image with your trained deep-learning model and explore its predicted disease class in a clean, easy-to-read dashboard.</p>
+        <p>Upload a plant leaf photo to view the disease class predicted by your trained
+        deep-learning model in a clean, easy-to-read dashboard.</p>
         <div class="hero-pill">🌱 MobileNetV2 &nbsp; · &nbsp; Image-based prediction</div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-@st.cache_resource
-def load_model():
-    return tf.keras.models.load_model("plant_disease_model.keras")
 
-    return np.load("class_names.npy", allow_pickle=True).tolist()
+# =========================================================
+# MODEL AND CLASS NAMES
+# These definitions are intentionally at module level.
+# =========================================================
+@st.cache_resource(show_spinner="Loading plant disease model...")
+def load_model(model_path: str):
+    return tf.keras.models.load_model(model_path)
 
-try:
-    model = load_model()
-    class_names = load_class_names()
-except Exception as exc:
-    st.error("Model ya class names load nahi ho paaye. Confirm karo ki `plant_disease_model.keras` aur `class_names.npy` app file ke same folder mein hain.")
-    st.code(str(exc))
+
+@st.cache_data(show_spinner=False)
+def load_class_names(class_names_path: str):
+    names = np.load(class_names_path, allow_pickle=True)
+    return [str(name) for name in names.tolist()]
+
+
+if not MODEL_PATH.is_file():
+    st.error(f"Model file not found: {MODEL_PATH.name}")
+    st.info("Place plant_disease_model.keras in the same folder as app.py.")
     st.stop()
 
-st.markdown('<div class="section-heading">🔎 Check your plant leaf</div>', unsafe_allow_html=True)
-st.markdown('<div class="muted">Choose a clear, well-lit photo where the leaf is easy to see.</div>', unsafe_allow_html=True)
+if not CLASS_NAMES_PATH.is_file():
+    st.error(f"Class names file not found: {CLASS_NAMES_PATH.name}")
+    st.info("Place class_names.npy in the same folder as app.py.")
+    st.stop()
+
+try:
+    model = load_model(str(MODEL_PATH))
+    class_names = load_class_names(str(CLASS_NAMES_PATH))
+except Exception as exc:
+    st.error("The model or class names could not be loaded.")
+    st.exception(exc)
+    st.stop()
+
+# Validate model output and labels before user submits an image.
+try:
+    output_shape = model.output_shape
+    output_count = int(output_shape[-1])
+    if output_count != len(class_names):
+        st.error(
+            f"Model/class mismatch: model predicts {output_count} classes, "
+            f"but class_names.npy contains {len(class_names)} labels. "
+            "Use the class_names.npy generated for this exact trained model."
+        )
+        st.stop()
+except (AttributeError, TypeError, ValueError, IndexError):
+    # Some custom models do not expose a simple output_shape.
+    pass
+
+
+# =========================================================
+# IMAGE INPUT
+# =========================================================
+st.markdown(
+    '<div class="section-heading">🔎 Check your plant leaf</div>',
+    unsafe_allow_html=True,
+)
+st.markdown(
+    '<div class="muted">Choose a clear, well-lit photo where the leaf is easy to see.</div>',
+    unsafe_allow_html=True,
+)
 st.write("")
 
 left, right = st.columns([1.02, 0.98], gap="large")
@@ -115,7 +194,9 @@ with left:
         horizontal=True,
         label_visibility="collapsed",
     )
+
     image = None
+
     if input_method == "📁 Upload image":
         uploaded_file = st.file_uploader(
             "Drop a leaf photo here",
@@ -125,68 +206,101 @@ with left:
         if uploaded_file is not None:
             try:
                 image = Image.open(uploaded_file).convert("RGB")
-            except Exception:
+            except (UnidentifiedImageError, OSError):
                 st.error("This image could not be opened. Please try another JPG or PNG.")
     else:
         camera_image = st.camera_input("Take a leaf photo")
         if camera_image is not None:
             try:
                 image = Image.open(camera_image).convert("RGB")
-            except Exception:
+            except (UnidentifiedImageError, OSError):
                 st.error("This camera image could not be opened. Please try again.")
-    st.markdown('<div class="small-note">Tip: avoid blurry photos, strong shadows, and backgrounds that hide most of the leaf.</div>', unsafe_allow_html=True)
+
+    st.markdown(
+        '<div class="small-note">Tip: avoid blurry photos, strong shadows, and backgrounds '
+        'that hide most of the leaf.</div>',
+        unsafe_allow_html=True,
+    )
 
 with right:
-    st.markdown('<div class="section-heading">🖼️ Image preview</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="section-heading">🖼️ Image preview</div>',
+        unsafe_allow_html=True,
+    )
     if image is not None:
         st.image(image, caption="Selected leaf image", use_container_width=True)
     else:
         st.markdown(
             """
-            <div class="panel" style="min-height:260px;display:flex;align-items:center;justify-content:center;text-align:center;">
+            <div class="panel" style="min-height:260px;display:flex;align-items:center;
+            justify-content:center;text-align:center;">
                 <div>
                     <div style="font-size:3rem;">🍃</div>
-                    <div style="font-size:1.05rem;font-weight:700;color:#214b34;">Your leaf photo will appear here</div>
-                    <div class="small-note" style="margin-top:.5rem;">Upload an image or use your camera to get started.</div>
+                    <div style="font-size:1.05rem;font-weight:700;color:#214b34;">
+                        Your leaf photo will appear here
+                    </div>
+                    <div class="small-note" style="margin-top:.5rem;">
+                        Upload an image or use your camera to get started.
+                    </div>
                 </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
+
+# =========================================================
+# PREDICTION
+# =========================================================
 st.write("")
-if image is not None and st.button("🌿 Analyze leaf", type="primary", use_container_width=True):
+if image is not None and st.button(
+    "🌿 Analyze leaf", type="primary", use_container_width=True
+):
     try:
         with st.spinner("Examining the leaf image..."):
-            resized = image.resize((224, 224))
+            resized = image.resize(IMAGE_SIZE)
             image_array = np.asarray(resized, dtype=np.float32)
             batch = np.expand_dims(image_array, axis=0)
-            predictions = model.predict(batch, verbose=0)
-            scores = np.asarray(predictions[0], dtype=np.float32)
 
-            if scores.ndim != 1 or len(scores) != len(class_names):
-                st.error(f"Model output has {len(scores)} classes, but class_names.npy contains {len(class_names)} labels. These files must match the model used for training.")
+            predictions = model.predict(batch, verbose=0)
+            scores = np.asarray(predictions[0], dtype=np.float32).reshape(-1)
+
+            if len(scores) != len(class_names):
+                st.error(
+                    f"Model returned {len(scores)} scores, but there are "
+                    f"{len(class_names)} class names. Please check that the model "
+                    "and class_names.npy belong together."
+                )
                 st.stop()
 
             predicted_index = int(np.argmax(scores))
             confidence = float(scores[predicted_index])
-            disease_raw = str(class_names[predicted_index])
+            disease_raw = class_names[predicted_index]
             disease_display = disease_raw.replace("___", " → ").replace("_", " ")
 
         st.markdown("---")
-        st.markdown('<div class="section-heading">📋 Prediction report</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="section-heading">📋 Prediction report</div>',
+            unsafe_allow_html=True,
+        )
+
         result_col, confidence_col = st.columns([1.35, 0.65], gap="large")
+
         with result_col:
+            safe_disease_display = html.escape(disease_display)
             st.markdown(
                 f"""
                 <div class="panel">
                     <div class="result-label">Predicted class</div>
-                    <div class="result-name">{disease_display}</div>
-                    <div class="small-note">This is the class selected by the model for the uploaded image.</div>
+                    <div class="result-name">{safe_disease_display}</div>
+                    <div class="small-note">
+                        This is the class selected by the model for the supplied image.
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
+
         with confidence_col:
             st.markdown('<div class="panel">', unsafe_allow_html=True)
             st.metric("🎯 Model confidence", f"{confidence * 100:.1f}%")
@@ -199,11 +313,20 @@ if image is not None and st.button("🌿 Analyze leaf", type="primary", use_cont
                 st.error("Low model confidence")
             st.markdown("</div>", unsafe_allow_html=True)
 
-        st.info("Confidence is the model's score for its chosen class; it does not guarantee that the prediction is correct. Use a clear photo and seek expert advice before making plant-treatment decisions.")
+        st.info(
+            "Confidence is the model's score for its selected class; it does not guarantee "
+            "that the prediction is correct. Use a clear photo and seek expert advice "
+            "before making plant-treatment decisions."
+        )
+
     except Exception as exc:
         st.error("Prediction could not be completed. Check the model and image, then try again.")
-        st.code(str(exc))
+        st.exception(exc)
 
+
+# =========================================================
+# FOOTER
+# =========================================================
 st.markdown("---")
 st.markdown(
     """
